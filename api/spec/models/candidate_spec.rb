@@ -2,7 +2,7 @@ require "rails_helper"
 
 RSpec.describe Candidate, type: :model do
   it "requires a name" do
-    candidate = Candidate.new(name: nil)
+    candidate = build(:candidate, name: nil)
 
     expect(candidate).not_to be_valid
     expect(candidate.errors[:name]).to be_present
@@ -10,11 +10,10 @@ RSpec.describe Candidate, type: :model do
 
   describe ".results" do
     it "returns totals and per-candidate percentages" do
-      a = Candidate.create!(name: "A")
-      b = Candidate.create!(name: "B")
-      Vote.create!(candidate: a)
-      Vote.create!(candidate: a)
-      Vote.create!(candidate: b)
+      a = create(:candidate, name: "A")
+      b = create(:candidate, name: "B")
+      create_list(:vote, 2, candidate: a)
+      create(:vote, candidate: b)
 
       results = Candidate.results
 
@@ -26,7 +25,7 @@ RSpec.describe Candidate, type: :model do
     end
 
     it "returns zero percentages when there are no votes" do
-      a = Candidate.create!(name: "A")
+      a = create(:candidate, name: "A")
 
       results = Candidate.results
 

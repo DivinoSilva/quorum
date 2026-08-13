@@ -2,7 +2,7 @@ require "rails_helper"
 
 RSpec.describe Vote, type: :model do
   it "requires a candidate" do
-    vote = Vote.new(candidate: nil)
+    vote = build(:vote, candidate: nil)
 
     expect(vote).not_to be_valid
     expect(vote.errors[:candidate]).to be_present
@@ -10,10 +10,10 @@ RSpec.describe Vote, type: :model do
 
   describe ".hourly_totals" do
     it "groups votes by hour" do
-      candidate = Candidate.create!(name: "A")
-      Vote.create!(candidate: candidate, created_at: Time.utc(2026, 8, 13, 10, 15))
-      Vote.create!(candidate: candidate, created_at: Time.utc(2026, 8, 13, 10, 45))
-      Vote.create!(candidate: candidate, created_at: Time.utc(2026, 8, 13, 11, 5))
+      candidate = create(:candidate)
+      create(:vote, candidate: candidate, created_at: Time.utc(2026, 8, 13, 10, 15))
+      create(:vote, candidate: candidate, created_at: Time.utc(2026, 8, 13, 10, 45))
+      create(:vote, candidate: candidate, created_at: Time.utc(2026, 8, 13, 11, 5))
 
       totals = Vote.hourly_totals
 

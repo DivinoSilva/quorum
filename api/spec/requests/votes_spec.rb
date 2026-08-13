@@ -1,7 +1,7 @@
 require "rails_helper"
 
 RSpec.describe "POST /votes", type: :request do
-  let!(:candidate) { Candidate.create!(name: "A") }
+  let!(:candidate) { create(:candidate) }
 
   it "creates a vote and returns current results" do
     post "/votes", params: { candidate_id: candidate.id }, as: :json
