@@ -39,7 +39,7 @@ function formatHour(isoHour) {
 async function loadResults() {
   const [resultsResponse, hourlyResponse] = await Promise.all([
     fetch(`${API_BASE_URL}/results`),
-    fetch(`${API_BASE_URL}/results/hourly`)
+    fetch(`${API_BASE_URL}/results?group_by=hour`)
   ]);
 
   const results = await resultsResponse.json();

@@ -67,52 +67,40 @@ paths:
           description: too many votes from this IP in a short window (Rack::Attack throttle)
   /results:
     get:
-      summary: Current totals, cached for 2 seconds
+      summary: Vote totals — current snapshot, or grouped by hour via query params
+      description: >
+        With no query params, returns the live total and per-candidate breakdown
+        (cached for 2 seconds). Pass `group_by=hour` to instead get that day's
+        votes broken into 24 hourly buckets — the period is a filter on this same
+        resource, not a separate endpoint.
       tags:
         - Results
+      parameters:
+        - name: group_by
+          in: query
+          required: false
+          description: Set to `hour` to receive the hourly breakdown instead of the live snapshot.
+          schema:
+            type: string
+            enum: [hour]
+        - name: date
+          in: query
+          required: false
+          description: Only used with group_by=hour. Day to query, YYYY-MM-DD. Defaults to today.
+          schema:
+            type: string
+            format: date
       responses:
         '200':
           description: results
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Results'
-  /results/hourly:
-    get:
-      summary: Vote totals for all 24 hours of a day, zero-filled where there are no votes
-      tags:
-        - Results
-      parameters:
-        - name: date
-          in: query
-          required: false
-          description: Day to query, YYYY-MM-DD. Defaults to today.
-          schema:
-            type: string
-            format: date
-      responses:
-        '200':
-          description: hourly totals
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  date:
-                    type: string
-                    format: date
-                  hours:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        hour:
-                          type: string
-                          format: date-time
-                        total:
-                          type: integer
+                oneOf:
+                  - $ref: '#/components/schemas/Results'
+                  - $ref: '#/components/schemas/HourlyResults'
         '400':
-          description: malformed date
+          description: unsupported group_by, or malformed date
           content:
             application/json:
               schema:
@@ -174,5 +162,21 @@ components:
                 type: integer
               percentage:
                 type: number
+    HourlyResults:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        hours:
+          type: array
+          items:
+            type: object
+            properties:
+              hour:
+                type: string
+                format: date-time
+              total:
+                type: integer
 servers:
   - url: http://localhost:3000

@@ -17,14 +17,14 @@ RSpec.describe 'GET /results', type: :request do
   end
 end
 
-RSpec.describe 'GET /results/hourly', type: :request do
+RSpec.describe 'GET /results?group_by=hour', type: :request do
   let!(:candidate) { create(:candidate) }
 
   it 'returns all 24 hours of the current day, zero-filled where there are no votes' do
     travel_to Time.utc(2026, 8, 13, 15, 0)
     create(:vote, candidate: candidate, created_at: Time.utc(2026, 8, 13, 10, 0))
 
-    get '/results/hourly'
+    get '/results', params: { group_by: 'hour' }
 
     expect(response).to have_http_status(:ok)
     body = response.parsed_body
@@ -34,10 +34,10 @@ RSpec.describe 'GET /results/hourly', type: :request do
     expect(body['date']).to eq('2026-08-13')
   end
 
-  it 'accepts a date query param for a different day' do
+  it 'accepts a date filter for a different day' do
     create(:vote, candidate: candidate, created_at: Time.utc(2026, 8, 10, 9, 0))
 
-    get '/results/hourly', params: { date: '2026-08-10' }
+    get '/results', params: { group_by: 'hour', date: '2026-08-10' }
 
     expect(response).to have_http_status(:ok)
     body = response.parsed_body
@@ -46,7 +46,13 @@ RSpec.describe 'GET /results/hourly', type: :request do
   end
 
   it 'returns 400 for a malformed date' do
-    get '/results/hourly', params: { date: 'not-a-date' }
+    get '/results', params: { group_by: 'hour', date: 'not-a-date' }
+
+    expect(response).to have_http_status(:bad_request)
+  end
+
+  it 'returns 400 for an unsupported group_by value' do
+    get '/results', params: { group_by: 'week' }
 
     expect(response).to have_http_status(:bad_request)
   end
