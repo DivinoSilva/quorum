@@ -17,14 +17,8 @@ Rails.application.configure do
   # Enable server timing
   config.server_timing = true
 
-  # Caching stays on (and Redis-backed, see config.cache_store in
-  # config/application.rb) even in development: the /results endpoint's
-  # read-side cache is part of what we're demonstrating here.
   config.action_controller.perform_caching = true
 
-  # Requests arrive with Host: api:3000 when Prometheus scrapes over the
-  # Docker Compose network — permit that alongside Rails' own localhost/IP
-  # defaults instead of replacing them.
   config.hosts << "api"
 
   # Print deprecation notices to the Rails logger.

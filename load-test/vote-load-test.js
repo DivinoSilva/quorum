@@ -1,5 +1,3 @@
-// k6 load test: proves the API sustains the ~1,000 votes/sec target from the challenge.
-// Placeholder until POST /votes exists — filled in alongside the API implementation.
 import http from "k6/http";
 import { check, sleep } from "k6";
 

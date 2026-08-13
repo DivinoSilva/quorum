@@ -18,14 +18,8 @@ gem "tzinfo-data", platforms: %i[ mingw mswin x64_mingw jruby ]
 # Use Rack CORS for handling Cross-Origin Resource Sharing (CORS), making cross-origin AJAX possible
 gem "rack-cors"
 
-# Redis: read-side cache for /results and shared store for Rack::Attack throttling.
-# NOTE: votes themselves are never written to Redis — Postgres is the sole source of truth.
 gem "redis", "~> 5.0"
-
-# Blocks abusive/bot-like request patterns (throttling by IP/fingerprint)
 gem "rack-attack"
-
-# In-process Prometheus metrics, exposed at /metrics for scraping
 gem "prometheus-client"
 
 group :development, :test do

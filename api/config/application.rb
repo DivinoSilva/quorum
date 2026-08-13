@@ -36,9 +36,6 @@ module Api
     # Skip views, helpers and assets when generating a new resource.
     config.api_only = true
 
-    # Redis is a read-side accelerator only: it caches aggregate results (GET /results)
-    # and backs Rack::Attack's shared throttle counters. Postgres remains the sole
-    # source of truth for votes — nothing here can cause a vote to be lost.
     config.cache_store = :redis_cache_store, { url: ENV.fetch("REDIS_URL", "redis://localhost:6379/0") }
 
     config.middleware.use Rack::Attack
