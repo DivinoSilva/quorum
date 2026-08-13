@@ -19,18 +19,19 @@ per candidate, and votes per hour, queryable at any time.
     │ http://localhost:3000/...
     ▼
 [proxy]  — nginx reverse proxy, the only container exposed to the host
-    │                                   │
-    │ /candidates, /votes, /results,    │ everything else
-    │ /results/hourly, /metrics, /up,   │ (/, /vote/*, static assets)
-    │ /api-docs                         │
-    ▼                                   ▼
-[api]  — Ruby on Rails (API-only)   [frontend]  — HTML/CSS/JS, no build step, nginx
-    │                                  │
-    │ INSERT vote (sync, WAL fsync)    │ throttle check / cache read
-    ▼                                  ▼
-[postgres]                         [redis]
- source of truth for votes          read-side cache for /results
-                                     + shared Rack::Attack store
+    │                                        │
+    │ /candidates, /votes, /results,         │ everything else
+    │ /results/hourly, /metrics, /up,        │ (/, /vote/*, static assets)
+    │ /api-docs                              │
+    ▼                                        ▼
+[api]  — Ruby on Rails (API-only)        [frontend]  — HTML/CSS/JS, no build step, nginx
+    │                    │                    (static files only — no backend of its own)
+    │ INSERT vote        │ throttle check
+    │ (sync, WAL fsync)  │ / cache read
+    ▼                    ▼
+[postgres]            [redis]
+ source of truth       read-side cache for /results
+ for votes             + shared Rack::Attack store
 
 [prometheus] ──scrape /metrics──▶ [api]
 [grafana] ──datasource──▶ [prometheus]
