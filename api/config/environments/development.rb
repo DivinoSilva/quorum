@@ -17,18 +17,15 @@ Rails.application.configure do
   # Enable server timing
   config.server_timing = true
 
-  # Enable/disable caching. By default caching is disabled.
-  # Run rails dev:cache to toggle caching.
-  if Rails.root.join("tmp/caching-dev.txt").exist?
-    config.cache_store = :memory_store
-    config.public_file_server.headers = {
-      "Cache-Control" => "public, max-age=#{2.days.to_i}"
-    }
-  else
-    config.action_controller.perform_caching = false
+  # Caching stays on (and Redis-backed, see config.cache_store in
+  # config/application.rb) even in development: the /results endpoint's
+  # read-side cache is part of what we're demonstrating here.
+  config.action_controller.perform_caching = true
 
-    config.cache_store = :null_store
-  end
+  # Requests arrive with Host: api:3000 when Prometheus scrapes over the
+  # Docker Compose network — permit that alongside Rails' own localhost/IP
+  # defaults instead of replacing them.
+  config.hosts << "api"
 
   # Print deprecation notices to the Rails logger.
   config.active_support.deprecation = :log
