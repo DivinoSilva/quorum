@@ -46,10 +46,7 @@ services:
       - ./api:/app
 
   frontend:
-    build:
-      context: ./frontend
-      args:
-        VITE_API_URL: http://localhost:3000
+    build: ./frontend
     ports:
       - "5173:80"
     depends_on:

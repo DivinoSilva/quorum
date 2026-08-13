@@ -21,7 +21,7 @@ per candidate, and votes per hour, queryable at any time.
 [Browser]
     │ HTTP (fetch)
     ▼
-[frontend]  — React + Vite + Tailwind, static build served by nginx
+[frontend]  — HTML/CSS/JS (no build step), served by nginx
     │ HTTP (fetch, CORS)
     ▼
 [api]  — Ruby on Rails (API-only)
@@ -73,7 +73,7 @@ up front rather than left implicit in the code.
 | Layer | Choice |
 |---|---|
 | API | Ruby on Rails 7 (API-only) |
-| Frontend | React + Vite + Tailwind CSS |
+| Frontend | HTML/CSS/JavaScript (no framework, no build step) |
 | Database | PostgreSQL |
 | Cache / throttle store | Redis |
 | Metrics | prometheus-client (Rails) + Prometheus |
@@ -85,7 +85,7 @@ up front rather than left implicit in the code.
 
 ```
 api/            Rails API (votes, results, /metrics)
-frontend/       React app (voting screen, results screen)
+frontend/       Plain HTML/CSS/JS (voting screen, results screen)
 monitoring/     Prometheus scrape config + Grafana provisioning/dashboards
 load-test/      k6 script exercising the ~1,000 votes/sec target
 docker-compose.yml
@@ -106,13 +106,13 @@ docker compose up --build
 - Prometheus: http://localhost:9090
 - Grafana: http://localhost:3001 (login `admin` / `admin`)
 
-For active development (hot reload), it's usually faster to run the API and frontend
-directly on the host while Postgres/Redis stay in Docker:
+For active development, it's usually faster to run the API directly on the host (while
+Postgres/Redis stay in Docker) and open `frontend/index.html` straight in a browser —
+there's no build step:
 
 ```bash
 docker compose up postgres redis
 cd api && bin/rails db:setup && bin/rails s
-cd frontend && npm install && npm run dev
 ```
 
 ## API documentation
