@@ -1,11 +1,11 @@
-require "ipaddr"
+require 'ipaddr'
 
 class VotesController < ApplicationController
   def create
     candidate = Candidate.find_by(id: params[:candidate_id])
 
     unless candidate
-      render json: { error: "candidate not found" }, status: :not_found
+      render json: { error: 'candidate not found' }, status: :not_found
       return
     end
 

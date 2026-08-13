@@ -7,7 +7,7 @@ class CreateVotes < ActiveRecord::Migration[7.0]
       t.timestamps
     end
 
-    add_index :votes, [:candidate_id, :created_at]
+    add_index :votes, %i[candidate_id created_at]
     add_index :votes, :created_at
   end
 end

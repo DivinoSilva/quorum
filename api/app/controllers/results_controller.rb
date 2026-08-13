@@ -10,6 +10,6 @@ class ResultsController < ApplicationController
   private
 
   def cached_results
-    Rails.cache.fetch("results", expires_in: 2.seconds) { Candidate.results }
+    Rails.cache.fetch('results', expires_in: 2.seconds) { Candidate.results }
   end
 end
