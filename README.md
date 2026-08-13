@@ -5,9 +5,6 @@ challenge: two options face off, people vote, results are shown as running perce
 Nothing in the domain model is tied to any specific show or event — it works for any
 two-option vote.
 
-> Status: project scaffold. Domain logic (voting endpoints, results, frontend screens) is
-> being implemented next. This README will grow alongside it.
-
 ## The problem, in one paragraph
 
 Users vote for one of two options as many times as they want — but votes must come from
@@ -19,12 +16,15 @@ per candidate, and votes per hour, queryable at any time.
 
 ```
 [Browser]
-    │ HTTP (fetch)
+    │ http://localhost:3000/...
     ▼
-[frontend]  — HTML/CSS/JS (no build step), served by nginx
-    │ HTTP (fetch, CORS)
-    ▼
-[api]  — Ruby on Rails (API-only)
+[proxy]  — nginx reverse proxy, the only container exposed to the host
+    │                                   │
+    │ /candidates, /votes, /results,    │ everything else
+    │ /results/hourly, /metrics, /up,   │ (/, /vote/*, static assets)
+    │ /api-docs                         │
+    ▼                                   ▼
+[api]  — Ruby on Rails (API-only)   [frontend]  — HTML/CSS/JS, no build step, nginx
     │                                  │
     │ INSERT vote (sync, WAL fsync)    │ throttle check / cache read
     ▼                                  ▼
@@ -36,9 +36,11 @@ per candidate, and votes per hour, queryable at any time.
 [grafana] ──datasource──▶ [prometheus]
 ```
 
-Two containers cover the challenge's "API and frontend as different microservices"
-requirement; Postgres, Redis, Prometheus and Grafana are each their own container too,
-so every component can be reasoned about, scaled, and explained independently.
+`api` and `frontend` remain separate, independently deployable containers — the challenge's
+"API and frontend as different microservices" requirement. `proxy` only does path-based
+routing (no business logic) so the whole app answers on a single public port without
+merging the two services into one process. Postgres, Redis, Prometheus and Grafana are
+each their own container too.
 
 ## Key decisions and trade-offs
 
@@ -85,7 +87,8 @@ up front rather than left implicit in the code.
 
 ```
 api/            Rails API (votes, results, /metrics)
-frontend/       Plain HTML/CSS/JS (voting screen, results screen)
+frontend/       Plain HTML/CSS/JS — index.html (hub) + vote/ + dashboard/
+proxy/          nginx reverse proxy unifying api + frontend on one port
 monitoring/     Prometheus scrape config + Grafana provisioning/dashboards
 load-test/      k6 script exercising the ~1,000 votes/sec target
 docker-compose.yml
@@ -101,19 +104,27 @@ cd quorum
 docker compose up --build
 ```
 
-- Frontend: http://localhost:5173
-- API: http://localhost:3000
+Everything is served from one port:
+
+- http://localhost:3000/ — hub page (links to voting, results, docs, dashboards)
+- http://localhost:3000/vote/ — voting screen
+- http://localhost:3000/dashboard/ — human-readable results dashboard, auto-refreshing (this is the "URL" the PDF asks production to check totals at)
+- http://localhost:3000/results, /results/hourly, /metrics, /up, /api-docs — raw API, for tooling/integration
 - Prometheus: http://localhost:9090
 - Grafana: http://localhost:3001 (login `admin` / `admin`)
 
-For active development, it's usually faster to run the API directly on the host (while
-Postgres/Redis stay in Docker) and open `frontend/index.html` straight in a browser —
-there's no build step:
+For active development it's usually faster to run the API directly on the host (while
+Postgres/Redis stay in Docker):
 
 ```bash
 docker compose up postgres redis
 cd api && bin/rails db:setup && bin/rails s
 ```
+
+The frontend fetches with relative paths (`/candidates`, `/votes`, ...), so it expects to
+be served from the same origin as the API — through `docker compose up`, or any static
+server proxied the same way. Opening `frontend/index.html` directly as a `file://` URL
+won't work.
 
 ## API documentation
 
@@ -122,7 +133,7 @@ cd api && bin/rails db:setup && bin/rails s
 | GET | `/candidates` | The two voting options: `{ candidates: [{ id, name, photo_url }] }` |
 | POST | `/votes` | Body: `{ candidate_id }`. Returns `201` with `{ vote: { id, candidate_id }, results }`, or `404` if the candidate doesn't exist |
 | GET | `/results` | `{ total_votes, candidates: [{ id, name, votes, percentage }] }` |
-| GET | `/results/hourly` | `{ hours: [{ hour, total }] }`, one entry per hour with at least one vote |
+| GET | `/results/hourly?date=YYYY-MM-DD` | `{ date, hours: [{ hour, total }] }` — all 24 hours of that day, zero-filled. `date` defaults to today; `400` if malformed |
 | GET | `/metrics` | Prometheus exposition format: `votes_total`, `http_server_requests_total`, `http_server_request_duration_seconds` |
 | GET | `/up` | Health check, always `200 OK` |
 

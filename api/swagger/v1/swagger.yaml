@@ -79,9 +79,17 @@ paths:
                 $ref: '#/components/schemas/Results'
   /results/hourly:
     get:
-      summary: Vote totals grouped by hour
+      summary: Vote totals for all 24 hours of a day, zero-filled where there are no votes
       tags:
         - Results
+      parameters:
+        - name: date
+          in: query
+          required: false
+          description: Day to query, YYYY-MM-DD. Defaults to today.
+          schema:
+            type: string
+            format: date
       responses:
         '200':
           description: hourly totals
@@ -90,6 +98,9 @@ paths:
               schema:
                 type: object
                 properties:
+                  date:
+                    type: string
+                    format: date
                   hours:
                     type: array
                     items:
@@ -100,6 +111,15 @@ paths:
                           format: date-time
                         total:
                           type: integer
+        '400':
+          description: malformed date
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
   /metrics:
     get:
       summary: Prometheus exposition format

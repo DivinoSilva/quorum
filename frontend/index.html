@@ -4,13 +4,38 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Quorum</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
-  <main class="screen">
-    <h1>Quorum</h1>
-    <p class="subtitle">Voting screen coming next.</p>
+  <main class="app">
+    <section class="screen">
+      <h1>Quorum</h1>
+      <p class="subtitle">Generic vote-tallying system — two options, unlimited votes, real-time results.</p>
+
+      <a href="/vote/" class="candidate-btn home-cta">Vote</a>
+      <a href="/dashboard/" class="candidate-btn home-cta">Results dashboard</a>
+
+      <div class="links">
+        <h2>Raw results (JSON)</h2>
+        <ul>
+          <li><a href="/results">/results</a> — total votes, per candidate</li>
+          <li><a href="/results/hourly">/results/hourly</a> — votes per hour</li>
+        </ul>
+
+        <h2>API &amp; observability</h2>
+        <ul>
+          <li><a href="/api-docs">/api-docs</a> — OpenAPI contract (Swagger UI)</li>
+          <li><a href="/metrics">/metrics</a> — Prometheus exposition format</li>
+          <li><a href="http://localhost:9090">Prometheus</a></li>
+          <li><a href="http://localhost:3001">Grafana</a> (admin / admin)</li>
+        </ul>
+
+        <h2>Source</h2>
+        <ul>
+          <li><a href="https://github.com/DivinoSilva/quorum">github.com/DivinoSilva/quorum</a></li>
+        </ul>
+      </div>
+    </section>
   </main>
-  <script src="app.js"></script>
 </body>
 </html>

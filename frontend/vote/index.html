@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quorum</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <main class="app">
+    <a href="/" class="home-link">&larr; Quorum</a>
+
+    <section id="voting-screen" class="screen">
+      <h1>Quorum</h1>
+      <p class="subtitle">Cast your vote</p>
+      <div class="candidates">
+        <button id="candidate-btn-0" class="candidate-btn" disabled></button>
+        <button id="candidate-btn-1" class="candidate-btn" disabled></button>
+      </div>
+      <p id="voting-error" class="error hidden"></p>
+    </section>
+
+    <section id="confirmation-screen" class="screen hidden">
+      <h1>Vote recorded</h1>
+      <p class="subtitle">Thanks for voting for <span id="voted-for"></span></p>
+      <div id="results-bars" class="results"></div>
+      <button id="vote-again-btn" class="secondary-btn">Vote again</button>
+    </section>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>
