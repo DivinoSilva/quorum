@@ -18,6 +18,9 @@ require "action_view/railtie"
 # you've limited to :test, :development, or :production.
 Bundler.require(*Rails.groups)
 
+require "prometheus/middleware/collector"
+require "prometheus/middleware/exporter"
+
 module Api
   class Application < Rails::Application
     # Initialize configuration defaults for originally generated Rails version.
@@ -36,8 +39,15 @@ module Api
     # Skip views, helpers and assets when generating a new resource.
     config.api_only = true
 
-    config.cache_store = :redis_cache_store, { url: ENV.fetch("REDIS_URL", "redis://localhost:6379/0") }
+    config.cache_store = :redis_cache_store, {
+      url: ENV.fetch("REDIS_URL", "redis://localhost:6379/0"),
+      error_handler: ->(method:, returning:, exception:) {
+        Rails.logger.error("redis cache error method=#{method} exception=#{exception.class}: #{exception.message}")
+      }
+    }
 
     config.middleware.use Rack::Attack
+    config.middleware.use Prometheus::Middleware::Collector
+    config.middleware.use Prometheus::Middleware::Exporter
   end
 end
