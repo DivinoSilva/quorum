@@ -64,4 +64,5 @@ RSpec.configure do |config|
   config.before(:suite) { Rack::Attack.enabled = false }
 
   config.include FactoryBot::Syntax::Methods
+  config.include ActiveSupport::Testing::TimeHelpers
 end

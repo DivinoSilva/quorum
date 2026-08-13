@@ -34,9 +34,6 @@ services:
       RAILS_ENV: development
       DATABASE_URL: postgres://quorum:quorum@postgres:5432/quorum_development
       REDIS_URL: redis://redis:6379/0
-      FRONTEND_ORIGIN: http://localhost:5173
-    ports:
-      - "3000:3000"
     depends_on:
       postgres:
         condition: service_healthy
@@ -47,10 +44,16 @@ services:
 
   frontend:
     build: ./frontend
-    ports:
-      - "5173:80"
     depends_on:
       - api
+
+  proxy:
+    build: ./proxy
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+      - frontend
 
   prometheus:
     image: prom/prometheus:latest
