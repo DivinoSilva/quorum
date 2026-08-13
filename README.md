@@ -14,27 +14,18 @@ per candidate, and votes per hour, queryable at any time.
 
 ## Architecture
 
-```
-[Browser]
-    │ http://localhost:3000/...
-    ▼
-[proxy]  — nginx reverse proxy, the only container exposed to the host
-    │                                        │
-    │ /candidates, /votes, /results,         │ everything else
-    │ /results/hourly, /metrics, /up,        │ (/, /vote/*, static assets)
-    │ /api-docs                              │
-    ▼                                        ▼
-[api]  — Ruby on Rails (API-only)        [frontend]  — HTML/CSS/JS, no build step, nginx
-    │                    │                    (static files only — no backend of its own)
-    │ INSERT vote        │ throttle check
-    │ (sync, WAL fsync)  │ / cache read
-    ▼                    ▼
-[postgres]            [redis]
- source of truth       read-side cache for /results
- for votes             + shared Rack::Attack store
+```mermaid
+flowchart TD
+    Browser(["Browser"]) -->|"http://localhost:3000/..."| Proxy["proxy — nginx reverse proxy<br/>only container exposed to the host"]
 
-[prometheus] ──scrape /metrics──▶ [api]
-[grafana] ──datasource──▶ [prometheus]
+    Proxy -->|"/candidates, /votes, /results,<br/>/metrics, /up, /api-docs"| API["api — Ruby on Rails (API-only)"]
+    Proxy -->|"everything else<br/>(/, /vote/*, static assets)"| Frontend["frontend — HTML/CSS/JS<br/>no build step, nginx<br/>(static files only, no backend of its own)"]
+
+    API -->|"INSERT vote<br/>(sync, WAL fsync)"| Postgres[("postgres<br/>source of truth for votes")]
+    API -->|"throttle check / cache read"| Redis[("redis<br/>cache for /results +<br/>shared Rack::Attack store")]
+
+    Prometheus["prometheus"] -->|"scrape /metrics"| API
+    Grafana["grafana"] -->|"datasource"| Prometheus
 ```
 
 `api` and `frontend` remain separate, independently deployable containers — the challenge's
@@ -110,7 +101,7 @@ Everything is served from one port:
 - http://localhost:3000/ — hub page (links to voting, results, docs, dashboards)
 - http://localhost:3000/vote/ — voting screen
 - http://localhost:3000/dashboard/ — human-readable results dashboard, auto-refreshing (this is the "URL" the PDF asks production to check totals at)
-- http://localhost:3000/results, /results/hourly, /metrics, /up, /api-docs — raw API, for tooling/integration
+- http://localhost:3000/results, /metrics, /up, /api-docs — raw API, for tooling/integration
 - Prometheus: http://localhost:9090
 - Grafana: http://localhost:3001 (login `admin` / `admin`)
 
@@ -134,7 +125,7 @@ won't work.
 | GET | `/candidates` | The two voting options: `{ candidates: [{ id, name, photo_url }] }` |
 | POST | `/votes` | Body: `{ candidate_id }`. Returns `201` with `{ vote: { id, candidate_id }, results }`, or `404` if the candidate doesn't exist |
 | GET | `/results` | `{ total_votes, candidates: [{ id, name, votes, percentage }] }` |
-| GET | `/results/hourly?date=YYYY-MM-DD` | `{ date, hours: [{ hour, total }] }` — all 24 hours of that day, zero-filled. `date` defaults to today; `400` if malformed |
+| GET | `/results?group_by=hour&date=YYYY-MM-DD` | Same resource, filtered: `{ date, hours: [{ hour, total }] }` — all 24 hours of that day, zero-filled. `date` defaults to today; `400` on an unsupported `group_by` or malformed `date` |
 | GET | `/metrics` | Prometheus exposition format: `votes_total`, `http_server_requests_total`, `http_server_request_duration_seconds` |
 | GET | `/up` | Health check, always `200 OK` |
 
