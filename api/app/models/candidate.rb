@@ -1,5 +1,5 @@
 class Candidate < ApplicationRecord
-  has_many :votes
+  has_many :votes, dependent: :restrict_with_error
 
   validates :name, presence: true
 

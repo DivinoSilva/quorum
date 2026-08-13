@@ -1,6 +1,6 @@
 VOTES_COUNTER = Prometheus::Client::Counter.new(
   :votes_total,
-  docstring: "Total votes cast",
+  docstring: 'Total votes cast',
   labels: [:candidate_id]
 )
 

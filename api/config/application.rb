@@ -1,16 +1,16 @@
-require_relative "boot"
+require_relative 'boot'
 
-require "rails"
+require 'rails'
 # Pick the frameworks you want:
-require "active_model/railtie"
-require "active_job/railtie"
-require "active_record/railtie"
+require 'active_model/railtie'
+require 'active_job/railtie'
+require 'active_record/railtie'
 # require "active_storage/engine"
-require "action_controller/railtie"
+require 'action_controller/railtie'
 # require "action_mailer/railtie"
 # require "action_mailbox/engine"
 # require "action_text/engine"
-require "action_view/railtie"
+require 'action_view/railtie'
 # require "action_cable/engine"
 # require "rails/test_unit/railtie"
 
@@ -18,8 +18,8 @@ require "action_view/railtie"
 # you've limited to :test, :development, or :production.
 Bundler.require(*Rails.groups)
 
-require "prometheus/middleware/collector"
-require "prometheus/middleware/exporter"
+require 'prometheus/middleware/collector'
+require 'prometheus/middleware/exporter'
 
 module Api
   class Application < Rails::Application
@@ -40,8 +40,8 @@ module Api
     config.api_only = true
 
     config.cache_store = :redis_cache_store, {
-      url: ENV.fetch("REDIS_URL", "redis://localhost:6379/0"),
-      error_handler: ->(method:, returning:, exception:) {
+      url: ENV.fetch('REDIS_URL', 'redis://localhost:6379/0'),
+      error_handler: lambda { |method:, exception:, **_|
         Rails.logger.error("redis cache error method=#{method} exception=#{exception.class}: #{exception.message}")
       }
     }

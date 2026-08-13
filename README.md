@@ -128,6 +128,14 @@ cd api && bin/rails db:setup && bin/rails s
 
 `POST /votes` is throttled by Rack::Attack (20 requests per IP per 10 seconds) — voting itself has no limit, this only targets script-like request patterns.
 
+The full OpenAPI contract is browsable at http://localhost:3000/api-docs (Swagger UI), served from `api/swagger/v1/swagger.yaml`.
+
+## Code style
+
+```bash
+docker compose exec api bundle exec rubocop
+```
+
 ## Running tests
 
 ```bash
