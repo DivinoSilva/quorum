@@ -117,8 +117,24 @@ cd api && bin/rails db:setup && bin/rails s
 
 ## API documentation
 
-_Coming next, alongside the `/votes` and `/results` endpoints._
+| Method | Path | Description |
+|---|---|---|
+| GET | `/candidates` | The two voting options: `{ candidates: [{ id, name, photo_url }] }` |
+| POST | `/votes` | Body: `{ candidate_id }`. Returns `201` with `{ vote: { id, candidate_id }, results }`, or `404` if the candidate doesn't exist |
+| GET | `/results` | `{ total_votes, candidates: [{ id, name, votes, percentage }] }` |
+| GET | `/results/hourly` | `{ hours: [{ hour, total }] }`, one entry per hour with at least one vote |
+| GET | `/metrics` | Prometheus exposition format: `votes_total`, `http_server_requests_total`, `http_server_request_duration_seconds` |
+| GET | `/up` | Health check, always `200 OK` |
+
+`POST /votes` is throttled by Rack::Attack (20 requests per IP per 10 seconds) — voting itself has no limit, this only targets script-like request patterns.
+
+## Running tests
+
+```bash
+docker compose exec -e RAILS_ENV=test -e DATABASE_URL=postgres://quorum:quorum@postgres:5432/quorum_test api bin/rails db:test:prepare
+docker compose exec -e RAILS_ENV=test -e DATABASE_URL=postgres://quorum:quorum@postgres:5432/quorum_test api bundle exec rspec
+```
 
 ## SLO / SLI
 
-_Coming next, alongside API instrumentation._
+_Coming next, alongside load testing._

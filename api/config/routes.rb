@@ -1,6 +1,9 @@
 Rails.application.routes.draw do
-  # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
+  resources :candidates, only: [:index]
+  resources :votes, only: [:create]
 
-  # Defines the root path route ("/")
-  # root "articles#index"
+  get "/results", to: "results#index"
+  get "/results/hourly", to: "results#hourly"
+
+  get "/up", to: proc { [200, {}, ["OK"]] }
 end
