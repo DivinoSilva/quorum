@@ -9,8 +9,9 @@ RSpec.describe Vote, type: :model do
   end
 
   describe ".hourly_totals" do
+    let(:candidate) { create(:candidate) }
+
     it "groups votes by hour" do
-      candidate = create(:candidate)
       create(:vote, candidate: candidate, created_at: Time.utc(2026, 8, 13, 10, 15))
       create(:vote, candidate: candidate, created_at: Time.utc(2026, 8, 13, 10, 45))
       create(:vote, candidate: candidate, created_at: Time.utc(2026, 8, 13, 11, 5))

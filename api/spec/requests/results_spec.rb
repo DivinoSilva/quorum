@@ -1,9 +1,10 @@
 require "rails_helper"
 
 RSpec.describe "GET /results", type: :request do
+  let!(:a) { create(:candidate) }
+  let!(:b) { create(:candidate) }
+
   it "returns totals and per-candidate breakdown" do
-    a = create(:candidate)
-    b = create(:candidate)
     create(:vote, candidate: a)
     create(:vote, candidate: b)
 
@@ -17,8 +18,9 @@ RSpec.describe "GET /results", type: :request do
 end
 
 RSpec.describe "GET /results/hourly", type: :request do
+  let!(:candidate) { create(:candidate) }
+
   it "returns votes grouped by hour" do
-    candidate = create(:candidate)
     create(:vote, candidate: candidate, created_at: Time.utc(2026, 8, 13, 10, 0))
 
     get "/results/hourly"

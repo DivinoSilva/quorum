@@ -9,9 +9,10 @@ RSpec.describe Candidate, type: :model do
   end
 
   describe ".results" do
+    let!(:a) { create(:candidate, name: "A") }
+    let(:b) { create(:candidate, name: "B") }
+
     it "returns totals and per-candidate percentages" do
-      a = create(:candidate, name: "A")
-      b = create(:candidate, name: "B")
       create_list(:vote, 2, candidate: a)
       create(:vote, candidate: b)
 
@@ -25,8 +26,6 @@ RSpec.describe Candidate, type: :model do
     end
 
     it "returns zero percentages when there are no votes" do
-      a = create(:candidate, name: "A")
-
       results = Candidate.results
 
       expect(results[:total_votes]).to eq(0)
