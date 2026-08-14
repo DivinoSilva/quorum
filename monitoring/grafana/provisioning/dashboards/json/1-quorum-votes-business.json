@@ -75,30 +75,10 @@
       }
     },
     {
-      "id": 4,
-      "type": "piechart",
-      "title": "Votos por candidato",
-      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 6 },
-      "datasource": "Prometheus",
-      "targets": [
-        {
-          "refId": "A",
-          "datasource": "Prometheus",
-          "expr": "sum by (candidate_name) (votes_total)",
-          "legendFormat": "{{candidate_name}}"
-        }
-      ],
-      "fieldConfig": { "defaults": { "decimals": 0 }, "overrides": [] },
-      "options": {
-        "legend": { "displayMode": "table", "placement": "right", "values": ["value", "percent"] },
-        "pieType": "pie"
-      }
-    },
-    {
       "id": 5,
       "type": "timeseries",
       "title": "Votos por segundo, por candidato",
-      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 6 },
+      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 6 },
       "datasource": "Prometheus",
       "targets": [
         {
@@ -115,8 +95,8 @@
       "id": 6,
       "type": "table",
       "title": "Detalhamento por candidato",
-      "description": "Votos e percentual exatos, sem o arredondamento da legenda do gráfico de pizza.",
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 15 },
+      "description": "Votos e percentual exatos por candidato.",
+      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 6 },
       "datasource": "Prometheus",
       "targets": [
         {
