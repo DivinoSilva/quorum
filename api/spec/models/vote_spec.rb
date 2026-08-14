@@ -21,10 +21,31 @@ RSpec.describe Vote, type: :model do
       totals = described_class.hourly_totals
 
       expect(totals.size).to eq(24)
-      expect(totals[10]).to eq({ hour: '2026-08-13T10:00:00Z', total: 2 })
-      expect(totals[11]).to eq({ hour: '2026-08-13T11:00:00Z', total: 1 })
-      expect(totals[0]).to eq({ hour: '2026-08-13T00:00:00Z', total: 0 })
-      expect(totals[23]).to eq({ hour: '2026-08-13T23:00:00Z', total: 0 })
+      expect(totals[10][:total]).to eq(2)
+      expect(totals[11][:total]).to eq(1)
+      expect(totals[0][:total]).to eq(0)
+      expect(totals[23][:total]).to eq(0)
+    end
+
+    it 'breaks each hour down per candidate' do
+      travel_to Time.utc(2026, 8, 13, 15, 0)
+      other_candidate = create(:candidate)
+
+      create(:vote, candidate: candidate, created_at: Time.utc(2026, 8, 13, 10, 0))
+      create(:vote, candidate: candidate, created_at: Time.utc(2026, 8, 13, 10, 30))
+      create(:vote, candidate: other_candidate, created_at: Time.utc(2026, 8, 13, 10, 15))
+
+      totals = described_class.hourly_totals
+
+      expect(totals[10][:total]).to eq(3)
+      expect(totals[10][:candidates]).to contain_exactly(
+        { id: candidate.id, name: candidate.name, votes: 2 },
+        { id: other_candidate.id, name: other_candidate.name, votes: 1 }
+      )
+      expect(totals[0][:candidates]).to contain_exactly(
+        { id: candidate.id, name: candidate.name, votes: 0 },
+        { id: other_candidate.id, name: other_candidate.name, votes: 0 }
+      )
     end
 
     it 'excludes votes from other days' do
@@ -43,7 +64,8 @@ RSpec.describe Vote, type: :model do
 
       totals = described_class.hourly_totals(Date.new(2026, 8, 10))
 
-      expect(totals[9]).to eq({ hour: '2026-08-10T09:00:00Z', total: 1 })
+      expect(totals[9][:total]).to eq(1)
+      expect(totals[9][:hour]).to eq('2026-08-10T09:00:00Z')
     end
   end
 end

@@ -1,4 +1,5 @@
 const API_BASE_URL = "";
+const CANDIDATE_COLORS = ["#2563eb", "#06b6d4", "#f59e0b", "#22c55e", "#a855f7"];
 
 const votingScreen = document.getElementById("voting-screen");
 const confirmationScreen = document.getElementById("confirmation-screen");
@@ -8,7 +9,8 @@ const candidateButtons = [
 ];
 const votingError = document.getElementById("voting-error");
 const votedForEl = document.getElementById("voted-for");
-const resultsBarsEl = document.getElementById("results-bars");
+const partialTotalVotesEl = document.getElementById("partial-total-votes");
+const resultsRowsEl = document.getElementById("results-rows");
 const voteAgainBtn = document.getElementById("vote-again-btn");
 
 let candidates = [];
@@ -22,6 +24,28 @@ function clearError() {
   votingError.classList.add("hidden");
 }
 
+function buildInitialsAvatar(candidate, color) {
+  const span = document.createElement("span");
+  span.className = "vote-candidate-avatar";
+  span.style.background = color;
+  span.textContent = candidate.name.charAt(0).toUpperCase();
+  return span;
+}
+
+function buildAvatar(candidate, color) {
+  if (!candidate.photo_url) {
+    return buildInitialsAvatar(candidate, color);
+  }
+
+  const img = document.createElement("img");
+  img.className = "vote-candidate-avatar";
+  img.src = candidate.photo_url;
+  img.alt = candidate.name;
+  img.onerror = () => img.replaceWith(buildInitialsAvatar(candidate, color));
+
+  return img;
+}
+
 async function loadCandidates() {
   const response = await fetch(`${API_BASE_URL}/candidates`);
   if (!response.ok) {
@@ -32,8 +56,12 @@ async function loadCandidates() {
   candidates = data.candidates;
 
   candidates.forEach((candidate, index) => {
+    const color = CANDIDATE_COLORS[index % CANDIDATE_COLORS.length];
     const button = candidateButtons[index];
-    button.textContent = candidate.name;
+
+    button.innerHTML = "";
+    button.appendChild(buildAvatar(candidate, color));
+    button.appendChild(document.createTextNode(candidate.name));
     button.dataset.candidateId = candidate.id;
     button.disabled = false;
     button.addEventListener("click", () => castVote(candidate.id));
@@ -52,11 +80,11 @@ async function castVote(candidateId) {
     });
 
     if (response.status === 429) {
-      throw new Error("Too many votes from this device. Try again in a moment.");
+      throw new Error("Muitos votos deste dispositivo em pouco tempo. Tente novamente em instantes.");
     }
 
     if (!response.ok) {
-      throw new Error("Could not record your vote. Try again.");
+      throw new Error("Não foi possível registrar seu voto. Tente novamente.");
     }
 
     const data = await response.json();
@@ -67,23 +95,34 @@ async function castVote(candidateId) {
   }
 }
 
-function buildResultRow(candidate) {
+function buildResultRow(candidate, color) {
   const row = document.createElement("div");
   row.className = "result-row";
 
-  const label = document.createElement("div");
-  label.className = "result-label";
-  label.textContent = `${candidate.name} — ${candidate.percentage}% (${candidate.votes})`;
+  const header = document.createElement("div");
+  header.className = "result-row-header";
+
+  const name = document.createElement("span");
+  name.className = "name";
+  name.textContent = candidate.name;
+
+  const stat = document.createElement("span");
+  stat.className = "stat";
+  stat.textContent = `${candidate.percentage}% (${candidate.votes})`;
+
+  header.appendChild(name);
+  header.appendChild(stat);
 
   const track = document.createElement("div");
-  track.className = "result-bar-track";
+  track.className = "progress-track";
 
   const bar = document.createElement("div");
-  bar.className = "result-bar";
+  bar.className = "progress-bar";
   bar.style.width = `${candidate.percentage}%`;
-
+  bar.style.background = color;
   track.appendChild(bar);
-  row.appendChild(label);
+
+  row.appendChild(header);
   row.appendChild(track);
 
   return row;
@@ -92,10 +131,12 @@ function buildResultRow(candidate) {
 function showConfirmation(data) {
   const votedCandidate = candidates.find((candidate) => candidate.id === data.vote.candidate_id);
   votedForEl.textContent = votedCandidate ? votedCandidate.name : "";
+  partialTotalVotesEl.textContent = data.results.total_votes;
 
-  resultsBarsEl.innerHTML = "";
-  data.results.candidates.forEach((candidate) => {
-    resultsBarsEl.appendChild(buildResultRow(candidate));
+  resultsRowsEl.innerHTML = "";
+  data.results.candidates.forEach((candidate, index) => {
+    const color = CANDIDATE_COLORS[index % CANDIDATE_COLORS.length];
+    resultsRowsEl.appendChild(buildResultRow(candidate, color));
   });
 
   votingScreen.classList.add("hidden");
@@ -110,4 +151,4 @@ function resetToVoting() {
 
 voteAgainBtn.addEventListener("click", resetToVoting);
 
-loadCandidates().catch(() => showError("Could not load candidates. Refresh the page."));
+loadCandidates().catch(() => showError("Não foi possível carregar os candidatos. Atualize a página."));

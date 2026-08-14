@@ -158,6 +158,9 @@ components:
                 type: integer
               name:
                 type: string
+              photo_url:
+                type: string
+                nullable: true
               votes:
                 type: integer
               percentage:
@@ -178,5 +181,16 @@ components:
                 format: date-time
               total:
                 type: integer
+              candidates:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    name:
+                      type: string
+                    votes:
+                      type: integer
 servers:
   - url: http://localhost:3000

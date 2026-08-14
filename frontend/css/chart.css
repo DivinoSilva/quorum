@@ -1,0 +1,98 @@
+.chart-panel {
+  padding: 1.25rem 1.5rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  background: #ffffff;
+}
+
+.chart-wrapper {
+  position: relative;
+}
+
+.chart {
+  width: 100%;
+  height: auto;
+}
+
+.chart-gridline {
+  stroke: #e2e8f0;
+  stroke-width: 1;
+}
+
+.chart-label {
+  fill: #94a3b8;
+  font-size: 10px;
+}
+
+.chart-line {
+  fill: none;
+  stroke-width: 2.5;
+}
+
+.chart-line-total {
+  stroke: #0f172a;
+  stroke-dasharray: 4 3;
+  stroke-width: 1.5;
+}
+
+.chart-hover-line {
+  stroke: #cbd5e1;
+  stroke-width: 1;
+  display: none;
+}
+
+.chart-dot {
+  stroke: #ffffff;
+  stroke-width: 1.5;
+  display: none;
+}
+
+.chart-dot-total {
+  fill: #0f172a;
+  display: none;
+}
+
+.chart-overlay {
+  fill: transparent;
+  cursor: crosshair;
+}
+
+.chart-tooltip {
+  display: none;
+  position: absolute;
+  transform: translate(-50%, -130%);
+  background: #0f172a;
+  color: #f8fafc;
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  margin-top: 1rem;
+  font-size: 0.85rem;
+  color: #475569;
+}
+
+.chart-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.chart-legend-swatch {
+  width: 14px;
+  height: 3px;
+  border-radius: 2px;
+  display: inline-block;
+}
+
+.chart-legend-swatch-total {
+  background: repeating-linear-gradient(to right, #0f172a 0, #0f172a 3px, transparent 3px, transparent 5px);
+}

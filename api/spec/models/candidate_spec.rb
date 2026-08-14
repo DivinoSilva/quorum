@@ -20,8 +20,8 @@ RSpec.describe Candidate, type: :model do
 
       expect(results[:total_votes]).to eq(3)
       expect(results[:candidates]).to contain_exactly(
-        { id: a.id, name: 'A', votes: 2, percentage: 66.67 },
-        { id: b.id, name: 'B', votes: 1, percentage: 33.33 }
+        { id: a.id, name: 'A', photo_url: nil, votes: 2, percentage: 66.67 },
+        { id: b.id, name: 'B', photo_url: nil, votes: 1, percentage: 33.33 }
       )
     end
 
@@ -29,7 +29,7 @@ RSpec.describe Candidate, type: :model do
       results = described_class.results
 
       expect(results[:total_votes]).to eq(0)
-      expect(results[:candidates]).to eq([{ id: a.id, name: 'A', votes: 0, percentage: 0.0 }])
+      expect(results[:candidates]).to eq([{ id: a.id, name: 'A', photo_url: nil, votes: 0, percentage: 0.0 }])
     end
   end
 end

@@ -14,6 +14,7 @@ class Candidate < ApplicationRecord
         {
           id: candidate.id,
           name: candidate.name,
+          photo_url: candidate.photo_url,
           votes: count,
           percentage: total.zero? ? 0.0 : (count * 100.0 / total).round(2)
         }
