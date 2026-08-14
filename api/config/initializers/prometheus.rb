@@ -9,7 +9,12 @@ require 'prometheus/client/data_stores/direct_file_store'
 # metrics must be declared and the directory cleared before the fork, per the gem's
 # multi-process caveats, otherwise a restarted worker can reuse a low PID and silently
 # merge with a stale file left by a previous run.
-metrics_dir = Rails.root.join('tmp/prometheus_multiproc').to_s
+# Scoped by environment: this directory is a host bind mount, shared by the
+# live server and any `rails`/`rspec` process run against the same checkout.
+# Without the per-env split, request specs (real POSTs through the Collector
+# middleware, using FactoryBot's throwaway candidates) would increment the
+# same counters the running dev server exposes to Prometheus.
+metrics_dir = Rails.root.join('tmp/prometheus_multiproc', Rails.env).to_s
 
 # This initializer also runs for `rails runner`/`console`/rake, which share this
 # directory with the live Puma server. Only the actual server boot may wipe it —
