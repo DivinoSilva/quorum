@@ -10,7 +10,12 @@ require 'prometheus/client/data_stores/direct_file_store'
 # multi-process caveats, otherwise a restarted worker can reuse a low PID and silently
 # merge with a stale file left by a previous run.
 metrics_dir = Rails.root.join('tmp/prometheus_multiproc').to_s
-FileUtils.rm_rf(metrics_dir)
+
+# This initializer also runs for `rails runner`/`console`/rake, which share this
+# directory with the live Puma server. Only the actual server boot may wipe it —
+# otherwise a console opened alongside a running server would silently zero out
+# its in-flight metrics.
+FileUtils.rm_rf(metrics_dir) if ARGV.first.in?(%w[server s])
 FileUtils.mkdir_p(metrics_dir)
 
 Prometheus::Client.config.data_store = Prometheus::Client::DataStores::DirectFileStore.new(dir: metrics_dir)
@@ -18,7 +23,7 @@ Prometheus::Client.config.data_store = Prometheus::Client::DataStores::DirectFil
 VOTES_COUNTER = Prometheus::Client::Counter.new(
   :votes_total,
   docstring: 'Total votes cast',
-  labels: [:candidate_id]
+  labels: %i[candidate_id candidate_name]
 )
 
 Prometheus::Client.registry.register(VOTES_COUNTER)
