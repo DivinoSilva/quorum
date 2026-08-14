@@ -34,6 +34,8 @@ services:
       RAILS_ENV: development
       DATABASE_URL: postgres://quorum:quorum@postgres:5432/quorum_development
       REDIS_URL: redis://redis:6379/0
+      RAILS_MAX_THREADS: "5"
+      WEB_CONCURRENCY: "12"
     depends_on:
       postgres:
         condition: service_healthy

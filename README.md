@@ -186,3 +186,67 @@ voting — and both are already on the dashboard, not just written down.
 If the error-rate SLI drops below 99.5% or the latency SLI crosses 300ms sustained, that's
 the signal to look at Redis/Postgres health first — per the trade-offs above, those are the
 two dependencies whose failure mode is "slower" rather than "down."
+
+## Load testing
+
+```bash
+docker run --rm --network laager_default \
+  -e BASE_URL=http://proxy:3000 \
+  -e CANDIDATE_IDS=1,2 \
+  -v "$(pwd)/load-test:/scripts" \
+  grafana/k6 run /scripts/vote-load-test.js
+```
+
+`k6`'s `constant-arrival-rate` executor drives the ~1,000 votes/sec target from the PDF for
+30s. Two things need to be disabled first, both env-gated so they're never accidentally left
+off in a real deploy:
+
+- **Rack::Attack's per-IP throttle** — a load generator hitting from one machine looks
+  exactly like the bot traffic it's designed to catch. Real 1,000 votes/sec comes from
+  thousands of distinct viewer IPs, not one, so throttling isn't what this test measures.
+- **Rails' development-mode class reloading** — reloads on every request by default, which
+  is irrelevant to whether the app can sustain load.
+
+```bash
+# docker-compose.override.yml (gitignored — this is a local, temporary toggle, not a
+# permanent deploy setting)
+services:
+  api:
+    environment:
+      DISABLE_VOTE_THROTTLE: "true"
+      LOAD_TEST: "true"
+```
+
+`docker compose up -d api` to apply it, then remove the file and `docker compose up -d api`
+again afterward to restore normal throttling.
+
+**What running this actually found**: the first three attempts failed outright, and each
+failure was a real, permanent fix, not a load-test-only workaround:
+
+1. **100% failure, every request blocked** — the proxy forwards requests with `Host: proxy`,
+   which Rails' `HostAuthorization` middleware didn't have on its allowlist (only `api` had
+   been added, for Prometheus's direct scrape). Fixed in `config/application.rb`, which also
+   caught that the allowlist had only ever been added to the `development` environment, not
+   the shared config — a gap that would have reproduced in production too.
+2. **0% failure but ~80 req/s and mounting latency** — Puma was running its Rails default:
+   one process, 5 threads. Under MRI's GIL, threads only help with I/O wait, not real
+   parallelism; `laager-api-1` pinned at ~100% CPU (one core) while Postgres sat at 0%,
+   which is what confirmed the bottleneck was Ruby concurrency, not the database.
+3. **Multi-process would fix that, but `prometheus-client`'s default in-memory store isn't
+   shared across forked workers** — enabling Puma's `workers` naively would have made
+   `votes_total` only reflect whichever worker happened to answer a given `/metrics` scrape.
+   Fixed by switching to `prometheus-client`'s `DirectFileStore` (`config/application.rb`),
+   which aggregates every worker's counters from disk on scrape — verified by casting votes
+   and confirming `/metrics` summed them across workers before turning load testing loose on
+   it. (Also found and fixed: `DirectFileStore` doesn't clean up stale files from previous
+   process IDs on its own, so a boot-time `FileUtils.rm_rf` was added — otherwise metrics
+   from long-dead workers slowly pollute every future scrape.)
+
+With those three fixed (`config/puma.rb`: `WEB_CONCURRENCY=12` workers, 5 threads each) and
+run on a shared 16-core dev machine — also running Postgres, Redis, the proxy, Prometheus,
+Grafana, and the `k6` load generator itself, not dedicated hardware — the app sustains
+**~900-920 req/s at 99%+ success**, at which point the host's own CPU is fully saturated
+(`laager-api-1` ~8 cores, `postgres` ~5 cores, load average ≈ core count). That ceiling is
+this machine, not the architecture: production would run on dedicated infrastructure, and
+scale the rest of the way by adding more `api` container replicas behind the proxy — the
+same horizontal pattern already used for every other service in this stack.

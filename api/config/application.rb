@@ -20,6 +20,13 @@ Bundler.require(*Rails.groups)
 
 require 'prometheus/middleware/collector'
 require 'prometheus/middleware/exporter'
+require 'prometheus/client/data_stores/direct_file_store'
+require 'fileutils'
+
+prometheus_multiproc_dir = ENV.fetch('PROMETHEUS_MULTIPROC_DIR', '/tmp/prometheus_multiproc')
+FileUtils.rm_rf(prometheus_multiproc_dir)
+Prometheus::Client.config.data_store =
+  Prometheus::Client::DataStores::DirectFileStore.new(dir: prometheus_multiproc_dir)
 
 module Api
   class Application < Rails::Application
@@ -38,6 +45,8 @@ module Api
     # Middleware like session, flash, cookies can be added back manually.
     # Skip views, helpers and assets when generating a new resource.
     config.api_only = true
+    config.hosts << 'api'
+    config.hosts << 'proxy'
 
     config.cache_store = :redis_cache_store, {
       url: ENV.fetch('REDIS_URL', 'redis://localhost:6379/0'),

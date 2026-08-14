@@ -6,10 +6,9 @@ Rails.application.configure do
   # In the development environment your application's code is reloaded any time
   # it changes. This slows down response time but is perfect for development
   # since you don't have to restart the web server when you make code changes.
-  config.cache_classes = false
-
-  # Do not eager load code on boot.
-  config.eager_load = false
+  load_test = ActiveModel::Type::Boolean.new.cast(ENV.fetch('LOAD_TEST', false))
+  config.cache_classes = load_test
+  config.eager_load = load_test
 
   # Show full error reports.
   config.consider_all_requests_local = true
@@ -18,8 +17,6 @@ Rails.application.configure do
   config.server_timing = true
 
   config.action_controller.perform_caching = true
-
-  config.hosts << 'api'
 
   # Print deprecation notices to the Rails logger.
   config.active_support.deprecation = :log
