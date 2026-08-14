@@ -7,6 +7,22 @@ challenge: two options face off, people vote, results are shown as running perce
 Nothing in the domain model is tied to any specific show or event — it works for any
 two-option vote.
 
+## Contents
+
+- [The problem, in one paragraph](#the-problem-in-one-paragraph)
+- [Architecture](#architecture)
+- [Key decisions and trade-offs](#key-decisions-and-trade-offs)
+- [Stack](#stack)
+- [Repository layout](#repository-layout)
+- [Running locally](#running-locally)
+- [**API documentation**](#api-documentation) — REST contract, request/response shapes, and the live Swagger UI
+- [Logging](#logging)
+- [Monitoring](#monitoring)
+- [Code style](#code-style)
+- [Running tests](#running-tests)
+- [SLO / SLI](#slo--sli)
+- [Load testing](#load-testing)
+
 ## The problem, in one paragraph
 
 Users vote for one of two options as many times as they want — but votes must come from
@@ -151,14 +167,38 @@ To see the `error` path live: `docker compose stop postgres`, hit `POST /votes` 
 ## Monitoring
 
 Prometheus scrapes `/metrics` every 5s (`monitoring/prometheus.yml`). Grafana auto-provisions
-the Prometheus datasource and a dashboard (`monitoring/grafana/provisioning/dashboards/json/quorum-api-overview.json`)
+the Prometheus datasource and three dashboards (`monitoring/grafana/provisioning/dashboards/json/`)
 on startup — nothing to click through by hand. Open http://localhost:3001 (`admin`/`admin`) →
-**Quorum → Quorum — API Overview**. Seven panels:
+folder **Quorum**:
 
-- Total votes, votes/sec (1m rate), error rate (5xx, 5m rate)
-- Votes by candidate (distribution) and votes/sec by candidate (trend)
-- API latency, p95/p99 per route
-- HTTP requests by status code
+- **Quorum — Votes & Business**: total votes, votes/sec, progress toward the 1,000
+  votes/sec peak target, votes by candidate (distribution) and votes/sec by candidate (trend).
+- **Quorum — API Performance**: requests/sec by route, p50/p95/p99 latency by route, total
+  throughput, average response time.
+- **Quorum — Errors & Debug**: error rate (5xx), throttled votes (429/sec), unhandled
+  exceptions escaping to Rack, requests by status code, 4xx/5xx broken down by route — the
+  dashboard to open first when something looks wrong.
+
+### Two multi-process gotchas found and fixed while building this
+
+Both were invisible until traffic was pushed through the actual Puma configuration
+(`WEB_CONCURRENCY=12`, `config/puma.rb`), not obvious from reading the code in isolation:
+
+- **Throttled (429) requests were invisible to Prometheus.** `config/application.rb` had
+  `Rack::Attack` registered *before* `Prometheus::Middleware::Collector`, so a throttled
+  request never reached the Collector at all — Rack::Attack's own short-circuit response
+  skipped it. Fixed by reordering so Collector wraps Rack::Attack: it now sees every
+  response Rack::Attack returns, including the 429s.
+- **Metrics were inconsistent between scrapes.** prometheus-client's default `Synchronized`
+  store keeps counters in per-process memory. With 12 Puma workers, each scrape landed on
+  one arbitrary worker and only reported that worker's local counters — the same query could
+  return 0 or the full total depending on which process answered. Fixed in
+  `config/initializers/prometheus.rb` by switching to `DirectFileStore`, the gem's
+  documented multi-process store: each worker writes to its own file, and a scrape sums
+  across all of them. The metrics directory is wiped before Puma forks (`preload_app!` in
+  `config/puma.rb` runs the initializer once in the master process), since a restarted
+  worker can reuse a low PID and would otherwise silently merge with a stale file from a
+  previous run.
 
 ## Code style
 
@@ -180,9 +220,73 @@ voting — and both are already on the dashboard, not just written down.
 
 | SLO | Target | SLI (PromQL) | Dashboard panel |
 |---|---|---|---|
-| Availability | ≥ 99.5% of requests succeed (non-5xx) over a rolling 5m window | `1 - (sum(rate(http_server_requests_total{code=~"5.."}[5m])) or vector(0)) / (sum(rate(http_server_requests_total[5m])) or vector(1))` | "Taxa de erro (5xx, janela 5m)" |
-| Latency | p95 of any route stays under 300ms | `histogram_quantile(0.95, sum by (le, path) (rate(http_server_request_duration_seconds_bucket[5m])))` | "Latência da API (p95 / p99 por rota)" |
+| Availability | ≥ 99.5% of requests succeed (non-5xx) over a rolling 5m window | `1 - (sum(rate(http_server_requests_total{code=~"5.."}[5m])) or vector(0)) / (sum(rate(http_server_requests_total[5m])) or vector(1))` | Errors & Debug → "Taxa de erro (5xx, janela 5m)" |
+| Latency | p95 of any route stays under 300ms | `histogram_quantile(0.95, sum by (le, path) (rate(http_server_request_duration_seconds_bucket[5m])))` | API Performance → "Latência por rota — p50 / p95 / p99" |
 
 If the error-rate SLI drops below 99.5% or the latency SLI crosses 300ms sustained, that's
 the signal to look at Redis/Postgres health first — per the trade-offs above, those are the
 two dependencies whose failure mode is "slower" rather than "down."
+
+## Load testing
+
+```bash
+docker run --rm --network laager_default \
+  -e BASE_URL=http://proxy:3000 \
+  -e CANDIDATE_IDS=1,2 \
+  -v "$(pwd)/load-test:/scripts" \
+  grafana/k6 run /scripts/vote-load-test.js
+```
+
+`k6`'s `constant-arrival-rate` executor drives the ~1,000 votes/sec target from the PDF for
+30s. Two things need to be disabled first, both env-gated so they're never accidentally left
+off in a real deploy:
+
+- **Rack::Attack's per-IP throttle** — a load generator hitting from one machine looks
+  exactly like the bot traffic it's designed to catch. Real 1,000 votes/sec comes from
+  thousands of distinct viewer IPs, not one, so throttling isn't what this test measures.
+- **Rails' development-mode class reloading** — reloads on every request by default, which
+  is irrelevant to whether the app can sustain load.
+
+```bash
+# docker-compose.override.yml (gitignored — this is a local, temporary toggle, not a
+# permanent deploy setting)
+services:
+  api:
+    environment:
+      DISABLE_VOTE_THROTTLE: "true"
+      LOAD_TEST: "true"
+```
+
+`docker compose up -d api` to apply it, then remove the file and `docker compose up -d api`
+again afterward to restore normal throttling.
+
+**What running this actually found**: the first three attempts failed outright, and each
+failure was a real, permanent fix, not a load-test-only workaround:
+
+1. **100% failure, every request blocked** — the proxy forwards requests with `Host: proxy`,
+   which Rails' `HostAuthorization` middleware didn't have on its allowlist (only `api` had
+   been added, for Prometheus's direct scrape). Fixed in `config/application.rb`, which also
+   caught that the allowlist had only ever been added to the `development` environment, not
+   the shared config — a gap that would have reproduced in production too.
+2. **0% failure but ~80 req/s and mounting latency** — Puma was running its Rails default:
+   one process, 5 threads. Under MRI's GIL, threads only help with I/O wait, not real
+   parallelism; `laager-api-1` pinned at ~100% CPU (one core) while Postgres sat at 0%,
+   which is what confirmed the bottleneck was Ruby concurrency, not the database.
+3. **Multi-process would fix that, but `prometheus-client`'s default in-memory store isn't
+   shared across forked workers** — enabling Puma's `workers` naively would have made
+   `votes_total` only reflect whichever worker happened to answer a given `/metrics` scrape.
+   Fixed by switching to `prometheus-client`'s `DirectFileStore` (`config/application.rb`),
+   which aggregates every worker's counters from disk on scrape — verified by casting votes
+   and confirming `/metrics` summed them across workers before turning load testing loose on
+   it. (Also found and fixed: `DirectFileStore` doesn't clean up stale files from previous
+   process IDs on its own, so a boot-time `FileUtils.rm_rf` was added — otherwise metrics
+   from long-dead workers slowly pollute every future scrape.)
+
+With those three fixed (`config/puma.rb`: `WEB_CONCURRENCY=12` workers, 5 threads each) and
+run on a shared 16-core dev machine — also running Postgres, Redis, the proxy, Prometheus,
+Grafana, and the `k6` load generator itself, not dedicated hardware — the app sustains
+**~900-920 req/s at 99%+ success**, at which point the host's own CPU is fully saturated
+(`laager-api-1` ~8 cores, `postgres` ~5 cores, load average ≈ core count). That ceiling is
+this machine, not the architecture: production would run on dedicated infrastructure, and
+scale the rest of the way by adding more `api` container replicas behind the proxy — the
+same horizontal pattern already used for every other service in this stack.
