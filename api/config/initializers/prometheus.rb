@@ -14,8 +14,10 @@ metrics_dir = Rails.root.join('tmp/prometheus_multiproc').to_s
 # This initializer also runs for `rails runner`/`console`/rake, which share this
 # directory with the live Puma server. Only the actual server boot may wipe it —
 # otherwise a console opened alongside a running server would silently zero out
-# its in-flight metrics.
-FileUtils.rm_rf(metrics_dir) if ARGV.first.in?(%w[server s])
+# its in-flight metrics. ARGV isn't a reliable signal here (Rails' command
+# dispatch consumes it before initializers run for both `server` and `runner`),
+# but the `Rails::Server` class is only ever loaded along the server boot path.
+FileUtils.rm_rf(metrics_dir) if Rails.const_defined?(:Server)
 FileUtils.mkdir_p(metrics_dir)
 
 Prometheus::Client.config.data_store = Prometheus::Client::DataStores::DirectFileStore.new(dir: metrics_dir)
