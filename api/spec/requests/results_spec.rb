@@ -4,7 +4,7 @@ RSpec.describe 'GET /results', type: :request do
   let!(:a) { create(:candidate) }
   let!(:b) { create(:candidate) }
 
-  it 'returns totals and per-candidate breakdown' do
+  it 'returns totals and per-candidate breakdown, including photo_url' do
     create(:vote, candidate: a)
     create(:vote, candidate: b)
 
@@ -14,6 +14,7 @@ RSpec.describe 'GET /results', type: :request do
     body = response.parsed_body
     expect(body['total_votes']).to eq(2)
     expect(body['candidates'].pluck('id')).to contain_exactly(a.id, b.id)
+    expect(body['candidates'].first).to include('photo_url')
   end
 end
 
@@ -29,8 +30,9 @@ RSpec.describe 'GET /results?group_by=hour', type: :request do
     expect(response).to have_http_status(:ok)
     body = response.parsed_body
     expect(body['hours'].size).to eq(24)
-    expect(body['hours'][10]).to eq({ 'hour' => '2026-08-13T10:00:00Z', 'total' => 1 })
-    expect(body['hours'][0]).to eq({ 'hour' => '2026-08-13T00:00:00Z', 'total' => 0 })
+    expect(body['hours'][10]['total']).to eq(1)
+    expect(body['hours'][10]['candidates']).to eq([{ 'id' => candidate.id, 'name' => candidate.name, 'votes' => 1 }])
+    expect(body['hours'][0]['total']).to eq(0)
     expect(body['date']).to eq('2026-08-13')
   end
 
@@ -42,7 +44,8 @@ RSpec.describe 'GET /results?group_by=hour', type: :request do
     expect(response).to have_http_status(:ok)
     body = response.parsed_body
     expect(body['date']).to eq('2026-08-10')
-    expect(body['hours'][9]).to eq({ 'hour' => '2026-08-10T09:00:00Z', 'total' => 1 })
+    expect(body['hours'][9]['hour']).to eq('2026-08-10T09:00:00Z')
+    expect(body['hours'][9]['total']).to eq(1)
   end
 
   it 'returns 400 for a malformed date' do

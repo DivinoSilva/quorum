@@ -1,30 +1,52 @@
 <!doctype html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Quorum</title>
-  <link rel="stylesheet" href="/style.css" />
+  <title>Quórum — Votar</title>
+  <link rel="stylesheet" href="/css/base.css" />
+  <link rel="stylesheet" href="/css/components.css" />
+  <link rel="stylesheet" href="/css/vote.css" />
 </head>
 <body>
-  <main class="app">
-    <a href="/" class="home-link">&larr; Quorum</a>
+  <div class="navbar">
+    <a href="/" class="navbar-back">&larr; Quórum</a>
+    <span class="navbar-brand">LAAGER</span>
+  </div>
 
-    <section id="voting-screen" class="screen">
-      <h1>Quorum</h1>
-      <p class="subtitle">Cast your vote</p>
-      <div class="candidates">
-        <button id="candidate-btn-0" class="candidate-btn" disabled></button>
-        <button id="candidate-btn-1" class="candidate-btn" disabled></button>
+  <main class="page">
+    <section id="voting-screen">
+      <div class="page-header" style="text-align:center">
+        <h1>Registre seu voto</h1>
+        <p class="subtitle">Escolha um dos candidatos abaixo</p>
       </div>
-      <p id="voting-error" class="error hidden"></p>
+
+      <div class="vote-candidates">
+        <button id="candidate-btn-0" class="vote-candidate-btn" disabled></button>
+        <button id="candidate-btn-1" class="vote-candidate-btn" disabled></button>
+      </div>
+
+      <p id="voting-error" class="error hidden" style="text-align:center"></p>
     </section>
 
-    <section id="confirmation-screen" class="screen hidden">
-      <h1>Vote recorded</h1>
-      <p class="subtitle">Thanks for voting for <span id="voted-for"></span></p>
-      <div id="results-bars" class="results"></div>
-      <button id="vote-again-btn" class="secondary-btn">Vote again</button>
+    <section id="confirmation-screen" class="hidden" style="text-align:center">
+      <div class="confirmation-icon">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="5,13 9,17 19,7"></polyline>
+        </svg>
+      </div>
+      <h1>Voto registrado</h1>
+      <p class="subtitle">Obrigado por votar em <span id="voted-for"></span></p>
+
+      <div class="partial-results-card">
+        <div class="partial-results-title">Resultado parcial &middot; <span id="partial-total-votes">0</span> votos</div>
+        <div id="results-rows"></div>
+      </div>
+
+      <div class="confirmation-actions">
+        <button id="vote-again-btn" class="btn btn-secondary">Votar novamente</button>
+        <a href="/dashboard/" class="btn btn-primary">Ver painel completo</a>
+      </div>
     </section>
   </main>
   <script src="app.js"></script>

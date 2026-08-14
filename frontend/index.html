@@ -1,41 +1,68 @@
 <!doctype html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Quorum</title>
-  <link rel="stylesheet" href="/style.css" />
+  <title>Quórum</title>
+  <link rel="stylesheet" href="/css/base.css" />
+  <link rel="stylesheet" href="/css/home.css" />
 </head>
 <body>
-  <main class="app">
-    <section class="screen">
-      <h1>Quorum</h1>
-      <p class="subtitle">Generic vote-tallying system — two options, unlimited votes, real-time results.</p>
+  <div class="navbar">
+    <span class="navbar-brand">QUÓRUM</span>
+    <span class="navbar-brand">LAAGER</span>
+  </div>
 
-      <a href="/vote/" class="candidate-btn home-cta">Vote</a>
-      <a href="/dashboard/" class="candidate-btn home-cta">Results dashboard</a>
+  <main class="home-page">
+    <h1>Quórum</h1>
+    <p class="subtitle">Sistema de apuração de votos — duas opções, votos ilimitados e resultados em tempo real.</p>
 
-      <div class="links">
-        <h2>Raw results (JSON)</h2>
-        <ul>
-          <li><a href="/results">/results</a> — total votes, per candidate</li>
-          <li><a href="/results?group_by=hour">/results?group_by=hour</a> — votes per hour, today</li>
-        </ul>
+    <div class="home-cards">
+      <a href="/vote/" class="home-card">
+        <span class="home-card-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="4" y="3" width="16" height="18" rx="2"></rect>
+            <path d="M9 12l2 2 4-4"></path>
+          </svg>
+        </span>
+        <div class="home-card-title">Votar &rarr;</div>
+        <div class="home-card-desc">Registre seu voto em um dos candidatos</div>
+      </a>
 
-        <h2>API &amp; observability</h2>
-        <ul>
-          <li><a href="/api-docs">/api-docs</a> — OpenAPI contract (Swagger UI)</li>
-          <li><a href="/metrics">/metrics</a> — Prometheus exposition format</li>
-          <li><a href="http://localhost:9090">Prometheus</a></li>
-          <li><a href="http://localhost:3001">Grafana</a> (admin / admin)</li>
-        </ul>
+      <a href="/dashboard/" class="home-card">
+        <span class="home-card-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="6" y1="20" x2="6" y2="12"></line>
+            <line x1="12" y1="20" x2="12" y2="8"></line>
+            <line x1="18" y1="20" x2="18" y2="4"></line>
+          </svg>
+        </span>
+        <div class="home-card-title">Painel de resultados &rarr;</div>
+        <div class="home-card-desc"><span id="home-total-votes">—</span> votos apurados &middot; evolução por hora</div>
+      </a>
+    </div>
 
-        <h2>Source</h2>
-        <ul>
-          <li><a href="https://github.com/DivinoSilva/quorum">github.com/DivinoSilva/quorum</a></li>
-        </ul>
-      </div>
-    </section>
+    <div class="links">
+      <h2>Resultados em JSON</h2>
+      <ul>
+        <li><a href="/results">/results</a> — total geral e por candidato</li>
+        <li><a href="/results?group_by=hour">/results?group_by=hour</a> — votos por hora, hoje</li>
+      </ul>
+
+      <h2>API &amp; observabilidade</h2>
+      <ul>
+        <li><a href="/api-docs">/api-docs</a> — contrato OpenAPI (Swagger UI)</li>
+        <li><a href="/metrics">/metrics</a> — formato de exposição do Prometheus</li>
+        <li><a href="http://localhost:9090">Prometheus</a></li>
+        <li><a href="http://localhost:3001">Grafana</a> (admin / admin)</li>
+      </ul>
+
+      <h2>Código-fonte</h2>
+      <ul>
+        <li><a href="https://github.com/DivinoSilva/quorum">github.com/DivinoSilva/quorum</a></li>
+      </ul>
+    </div>
   </main>
+  <script src="app.js"></script>
 </body>
 </html>

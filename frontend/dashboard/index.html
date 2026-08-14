@@ -1,24 +1,41 @@
 <!doctype html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Quorum — Dashboard</title>
-  <link rel="stylesheet" href="/style.css" />
+  <title>Quórum — Resultados</title>
+  <link rel="stylesheet" href="/css/base.css" />
+  <link rel="stylesheet" href="/css/components.css" />
+  <link rel="stylesheet" href="/css/candidate.css" />
+  <link rel="stylesheet" href="/css/chart.css" />
+  <link rel="stylesheet" href="/css/dashboard.css" />
 </head>
 <body>
-  <main class="app">
-    <a href="/" class="home-link">&larr; Quorum</a>
+  <div class="navbar">
+    <a href="/" class="navbar-back">&larr; Quórum</a>
+    <span class="navbar-brand">LAAGER</span>
+  </div>
 
-    <section class="screen">
-      <h1>Results</h1>
-      <p class="subtitle"><span id="total-votes">0</span> votes total</p>
+  <main class="page dashboard-page">
+    <div class="page-header">
+      <h1>Resultados</h1>
+      <p class="subtitle"><span id="total-votes">0</span> votos no total &middot; apuração por hora</p>
+    </div>
 
-      <div id="results-bars" class="results"></div>
+    <div id="stat-cards" class="stat-cards"></div>
 
-      <h2 class="section-title">Votes per hour</h2>
-      <div id="hourly-bars" class="results"></div>
-    </section>
+    <div id="candidate-results" class="candidate-results"></div>
+
+    <div class="chart-panel">
+      <div class="chart-section-header">
+        <div>
+          <h2 class="section-title">Votos por hora</h2>
+          <p id="peak-hour-label" class="chart-peak-label"></p>
+        </div>
+        <input type="date" id="date-picker" class="date-picker" />
+      </div>
+      <div id="hourly-chart" class="chart-container"></div>
+    </div>
   </main>
   <script src="app.js"></script>
 </body>

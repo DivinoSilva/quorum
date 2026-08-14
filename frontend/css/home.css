@@ -1,0 +1,100 @@
+.home-page {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 3rem 1.5rem;
+  text-align: center;
+}
+
+.home-page h1 {
+  font-size: 2.25rem;
+  margin: 0 0 0.5rem;
+}
+
+.home-page .subtitle {
+  color: #64748b;
+  max-width: 30rem;
+  margin: 0 auto 2rem;
+}
+
+.home-cards {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  text-align: left;
+  margin-bottom: 2.5rem;
+}
+
+.home-card {
+  display: block;
+  padding: 1.5rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  background: #ffffff;
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.home-card:hover {
+  border-color: #93c5fd;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.home-card-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #2563eb;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.9rem;
+}
+
+.home-card-icon svg {
+  width: 18px;
+  height: 18px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2;
+}
+
+.home-card-title {
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.home-card-desc {
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.links {
+  text-align: left;
+}
+
+.links h2 {
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #64748b;
+  margin: 1.5rem 0 0.5rem;
+}
+
+.links ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.links li {
+  padding: 0.35rem 0;
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.links a {
+  color: #2563eb;
+}
