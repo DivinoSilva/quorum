@@ -3,11 +3,7 @@ require 'ipaddr'
 class VotesController < ApplicationController
   def create
     candidate = Candidate.find_by(id: params[:candidate_id])
-
-    unless candidate
-      render json: { error: 'candidate not found' }, status: :not_found
-      return
-    end
+    return reject_unknown_candidate unless candidate
 
     vote = Vote.create!(candidate: candidate, voter_ip_masked: masked_ip)
     VOTES_COUNTER.increment(labels: { candidate_id: candidate.id })
@@ -17,6 +13,11 @@ class VotesController < ApplicationController
   end
 
   private
+
+  def reject_unknown_candidate
+    Rails.logger.warn("vote rejected: candidate_id=#{params[:candidate_id].inspect} not found")
+    render json: { error: 'candidate not found' }, status: :not_found
+  end
 
   def masked_ip
     ip = request.remote_ip

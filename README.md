@@ -1,5 +1,7 @@
 # Quorum
 
+[![CI](https://github.com/DivinoSilva/quorum/actions/workflows/ci.yml/badge.svg)](https://github.com/DivinoSilva/quorum/actions/workflows/ci.yml)
+
 A generic, high-throughput vote-tallying system. Built for the Laager FullStack technical
 challenge: two options face off, people vote, results are shown as running percentages.
 Nothing in the domain model is tied to any specific show or event — it works for any
@@ -133,6 +135,31 @@ won't work.
 
 The full OpenAPI contract is browsable at http://localhost:3000/api-docs (Swagger UI), served from `api/swagger/v1/swagger.yaml`.
 
+## Logging
+
+Structured, leveled logs across the request lifecycle:
+
+| Level | When |
+|---|---|
+| `info` | A vote is recorded (`vote created id=... candidate_id=...`) |
+| `warn` | A vote is rejected for an unknown candidate, or Rack::Attack throttles a request |
+| `error` | Redis is unreachable (`config.cache_store`'s `error_handler`, `/results` still serves from Postgres), or any other unhandled exception (`ApplicationController`'s `rescue_from`, which also returns a clean `500` instead of leaking a stack trace) |
+| `debug` | Every `/results` request logs the query params it received |
+
+To see the `error` path live: `docker compose stop postgres`, hit `POST /votes` (returns `500` with `{"error":"internal server error"}`, logs `unhandled exception: ...`), then `docker compose start postgres`. Same idea with `docker compose stop redis` against `GET /results` — it keeps returning `200` from Postgres directly while logging the Redis error.
+
+## Monitoring
+
+Prometheus scrapes `/metrics` every 5s (`monitoring/prometheus.yml`). Grafana auto-provisions
+the Prometheus datasource and a dashboard (`monitoring/grafana/provisioning/dashboards/json/quorum-api-overview.json`)
+on startup — nothing to click through by hand. Open http://localhost:3001 (`admin`/`admin`) →
+**Quorum → Quorum — API Overview**. Seven panels:
+
+- Total votes, votes/sec (1m rate), error rate (5xx, 5m rate)
+- Votes by candidate (distribution) and votes/sec by candidate (trend)
+- API latency, p95/p99 per route
+- HTTP requests by status code
+
 ## Code style
 
 ```bash
@@ -148,4 +175,14 @@ docker compose exec -e RAILS_ENV=test -e DATABASE_URL=postgres://quorum:quorum@p
 
 ## SLO / SLI
 
-_Coming next, alongside load testing._
+Two objectives, chosen because they're exactly what production would notice during peak
+voting — and both are already on the dashboard, not just written down.
+
+| SLO | Target | SLI (PromQL) | Dashboard panel |
+|---|---|---|---|
+| Availability | ≥ 99.5% of requests succeed (non-5xx) over a rolling 5m window | `1 - (sum(rate(http_server_requests_total{code=~"5.."}[5m])) or vector(0)) / (sum(rate(http_server_requests_total[5m])) or vector(1))` | "Taxa de erro (5xx, janela 5m)" |
+| Latency | p95 of any route stays under 300ms | `histogram_quantile(0.95, sum by (le, path) (rate(http_server_request_duration_seconds_bucket[5m])))` | "Latência da API (p95 / p99 por rota)" |
+
+If the error-rate SLI drops below 99.5% or the latency SLI crosses 300ms sustained, that's
+the signal to look at Redis/Postgres health first — per the trade-offs above, those are the
+two dependencies whose failure mode is "slower" rather than "down."

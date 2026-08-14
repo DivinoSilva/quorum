@@ -1,5 +1,7 @@
 class ResultsController < ApplicationController
   def index
+    Rails.logger.debug { "results requested params=#{params.to_unsafe_h.slice('group_by', 'date')}" }
+
     if params[:group_by].present?
       render_grouped
     else

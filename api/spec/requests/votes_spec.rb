@@ -31,4 +31,13 @@ RSpec.describe 'POST /votes', type: :request do
 
     expect(Vote.where(candidate: candidate).count).to eq(2)
   end
+
+  it 'returns 500 with a clean JSON body when an unhandled exception is raised' do
+    allow(Candidate).to receive(:results).and_raise(StandardError, 'boom')
+
+    post '/votes', params: { candidate_id: candidate.id }, as: :json
+
+    expect(response).to have_http_status(:internal_server_error)
+    expect(response.parsed_body).to eq({ 'error' => 'internal server error' })
+  end
 end
