@@ -8,6 +8,8 @@ const STAT_ICONS = {
   trendingUp: '<polyline points="3,17 9,11 13,15 21,7"></polyline><polyline points="14,7 21,7 21,14"></polyline>'
 };
 
+const CLOCK_ICON = '<svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><polyline points="12,7 12,12 16,14"></polyline></svg>';
+
 const totalVotesEl = document.getElementById("total-votes");
 const statCardsEl = document.getElementById("stat-cards");
 const candidateResultsEl = document.getElementById("candidate-results");
@@ -90,8 +92,9 @@ function buildStatCards(results) {
 
 function updatePeakHourLabel(hourly) {
   const peakHour = hourly.hours.reduce((a, b) => (b.total > a.total ? b : a));
-  peakHourLabelEl.textContent =
+  const text =
     peakHour.total > 0 ? `Pico às ${formatHourLabel(peakHour.hour)} — ${peakHour.total} votos` : "Nenhum voto neste dia";
+  peakHourLabelEl.innerHTML = `${CLOCK_ICON}<span>${text}</span>`;
 }
 
 function buildCandidateCard(candidate, color, isLeading) {
