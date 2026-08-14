@@ -1,5 +1,7 @@
 # Quorum
 
+[![CI](https://github.com/DivinoSilva/quorum/actions/workflows/ci.yml/badge.svg)](https://github.com/DivinoSilva/quorum/actions/workflows/ci.yml)
+
 A generic, high-throughput vote-tallying system. Built for the Laager FullStack technical
 challenge: two options face off, people vote, results are shown as running percentages.
 Nothing in the domain model is tied to any specific show or event — it works for any
