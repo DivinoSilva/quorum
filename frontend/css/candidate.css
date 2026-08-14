@@ -2,7 +2,7 @@
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 1rem;
-  margin-bottom: 2rem;
+  margin-bottom: 3rem;
 }
 
 .candidate-result-card {
@@ -10,10 +10,12 @@
   border: 1px solid #e2e8f0;
   border-radius: 0.75rem;
   background: #ffffff;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .candidate-result-card.leading {
   border-color: #93c5fd;
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.14);
 }
 
 .candidate-avatar {
