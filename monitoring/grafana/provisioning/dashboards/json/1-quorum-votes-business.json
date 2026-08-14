@@ -110,6 +110,57 @@
       ],
       "fieldConfig": { "defaults": { "unit": "ops" }, "overrides": [] },
       "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } }
+    },
+    {
+      "id": 6,
+      "type": "table",
+      "title": "Detalhamento por candidato",
+      "description": "Votos e percentual exatos, sem o arredondamento da legenda do gráfico de pizza.",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 15 },
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": "Prometheus",
+          "expr": "sum by (candidate_name) (votes_total)",
+          "format": "table",
+          "instant": true
+        },
+        {
+          "refId": "B",
+          "datasource": "Prometheus",
+          "expr": "100 * sum by (candidate_name) (votes_total) / scalar(sum(votes_total))",
+          "format": "table",
+          "instant": true
+        }
+      ],
+      "transformations": [
+        { "id": "joinByField", "options": { "byField": "candidate_name", "mode": "outer" } },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": { "Time 1": true, "Time 2": true },
+            "renameByName": {
+              "candidate_name": "Candidato",
+              "Value #A": "Votos",
+              "Value #B": "Percentual"
+            }
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Percentual" },
+            "properties": [
+              { "id": "decimals", "value": 2 },
+              { "id": "unit", "value": "percent" }
+            ]
+          }
+        ]
+      },
+      "options": { "showHeader": true }
     }
   ]
 }
