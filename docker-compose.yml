@@ -33,6 +33,7 @@ services:
     environment:
       RAILS_ENV: development
       DATABASE_URL: postgres://quorum:quorum@postgres:5432/quorum_development
+      TEST_DATABASE_URL: postgres://quorum:quorum@postgres:5432/quorum_test
       REDIS_URL: redis://redis:6379/0
       RAILS_MAX_THREADS: "5"
       WEB_CONCURRENCY: "12"

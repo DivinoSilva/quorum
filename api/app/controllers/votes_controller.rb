@@ -6,13 +6,17 @@ class VotesController < ApplicationController
     return reject_unknown_candidate unless candidate
 
     vote = Vote.create!(candidate: candidate, voter_ip_masked: masked_ip)
-    VOTES_COUNTER.increment(labels: { candidate_id: candidate.id })
+    record_vote_metric(candidate)
     Rails.logger.info("vote created id=#{vote.id} candidate_id=#{candidate.id}")
 
     render json: { vote: { id: vote.id, candidate_id: candidate.id }, results: Candidate.results }, status: :created
   end
 
   private
+
+  def record_vote_metric(candidate)
+    VOTES_COUNTER.increment(labels: { candidate_id: candidate.id, candidate_name: candidate.name })
+  end
 
   def reject_unknown_candidate
     Rails.logger.warn("vote rejected: candidate_id=#{params[:candidate_id].inspect} not found")

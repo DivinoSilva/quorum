@@ -84,8 +84,8 @@
         {
           "refId": "A",
           "datasource": "Prometheus",
-          "expr": "sum by (candidate_id) (votes_total)",
-          "legendFormat": "candidato {{candidate_id}}"
+          "expr": "sum by (candidate_name) (votes_total)",
+          "legendFormat": "{{candidate_name}}"
         }
       ],
       "options": {
@@ -103,8 +103,8 @@
         {
           "refId": "A",
           "datasource": "Prometheus",
-          "expr": "sum by (candidate_id) (rate(votes_total[1m]))",
-          "legendFormat": "candidato {{candidate_id}}"
+          "expr": "sum by (candidate_name) (rate(votes_total[1m]))",
+          "legendFormat": "{{candidate_name}}"
         }
       ],
       "fieldConfig": { "defaults": { "unit": "ops" }, "overrides": [] },
