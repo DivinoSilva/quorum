@@ -7,6 +7,22 @@ challenge: two options face off, people vote, results are shown as running perce
 Nothing in the domain model is tied to any specific show or event — it works for any
 two-option vote.
 
+## Contents
+
+- [The problem, in one paragraph](#the-problem-in-one-paragraph)
+- [Architecture](#architecture)
+- [Key decisions and trade-offs](#key-decisions-and-trade-offs)
+- [Stack](#stack)
+- [Repository layout](#repository-layout)
+- [Running locally](#running-locally)
+- [**API documentation**](#api-documentation) — REST contract, request/response shapes, and the live Swagger UI
+- [Logging](#logging)
+- [Monitoring](#monitoring)
+- [Code style](#code-style)
+- [Running tests](#running-tests)
+- [SLO / SLI](#slo--sli)
+- [Load testing](#load-testing)
+
 ## The problem, in one paragraph
 
 Users vote for one of two options as many times as they want — but votes must come from
