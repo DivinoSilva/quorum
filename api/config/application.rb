@@ -55,8 +55,8 @@ module Api
       }
     }
 
-    config.middleware.use Rack::Attack
     config.middleware.use Prometheus::Middleware::Collector
+    config.middleware.use Rack::Attack
     config.middleware.use Prometheus::Middleware::Exporter
   end
 end

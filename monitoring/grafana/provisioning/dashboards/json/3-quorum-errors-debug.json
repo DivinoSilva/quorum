@@ -1,0 +1,135 @@
+{
+  "uid": "quorum-errors-debug",
+  "title": "Quorum — Errors & Debug",
+  "tags": ["quorum"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "5s",
+  "time": { "from": "now-15m", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Taxa de erro (5xx, janela 5m)",
+      "description": "SLI de disponibilidade. Alvo do SLO: abaixo de 0.5%.",
+      "gridPos": { "h": 6, "w": 8, "x": 0, "y": 0 },
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": "Prometheus",
+          "expr": "100 * (sum(rate(http_server_requests_total{code=~\"5..\"}[5m])) or vector(0)) / (sum(rate(http_server_requests_total[5m])) or vector(1))"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 2,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "orange", "value": 0.1 },
+              { "color": "red", "value": 0.5 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "auto"
+      }
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Votos rejeitados por throttle (429/seg)",
+      "description": "Rack::Attack barrando padrão de tráfego tipo script em POST /votes (limite: 20 req / IP / 10s). Requer a Collector do Prometheus envolvendo o Rack::Attack na pilha de middleware — se isso regredir, este painel volta a ficar sempre em zero mesmo com throttling acontecendo.",
+      "gridPos": { "h": 6, "w": 8, "x": 8, "y": 0 },
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": "Prometheus",
+          "expr": "sum(rate(http_server_requests_total{path=\"/votes\",code=\"429\"}[1m]))"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "ops", "decimals": 2 }, "overrides": [] },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "auto"
+      }
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Exceções não tratadas escapando pro Rack",
+      "description": "Deve ficar em zero por design: ApplicationController#rescue_from converte toda StandardError em 500 antes dela escapar do Rails pro Rack, então esse contador do prometheus-client normalmente não incrementa. Um valor > 0 aqui indica algo quebrando fora do controller (middleware, boot, etc) — mais grave que um 500 comum.",
+      "gridPos": { "h": 6, "w": 8, "x": 16, "y": 0 },
+      "datasource": "Prometheus",
+      "targets": [
+        { "refId": "A", "datasource": "Prometheus", "expr": "sum(increase(http_server_exceptions_total[1h])) or vector(0)" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 1 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto"
+      }
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "Requisições por status code",
+      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 6 },
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": "Prometheus",
+          "expr": "sum by (code) (rate(http_server_requests_total[1m]))",
+          "legendFormat": "{{code}}"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "ops" }, "overrides": [] },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } }
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Erros 4xx/5xx por rota",
+      "description": "Onde procurar primeiro quando algo quebra: agrupa erro por rota + status code, não só o total.",
+      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 6 },
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": "Prometheus",
+          "expr": "sum by (path, code) (rate(http_server_requests_total{code=~\"4..|5..\"}[5m]))",
+          "legendFormat": "{{path}} [{{code}}]"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "ops" }, "overrides": [] },
+      "options": { "legend": { "displayMode": "table", "placement": "bottom", "values": ["lastNotNull"] }, "tooltip": { "mode": "multi" } }
+    }
+  ]
+}

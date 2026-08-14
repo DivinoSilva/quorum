@@ -151,14 +151,38 @@ To see the `error` path live: `docker compose stop postgres`, hit `POST /votes` 
 ## Monitoring
 
 Prometheus scrapes `/metrics` every 5s (`monitoring/prometheus.yml`). Grafana auto-provisions
-the Prometheus datasource and a dashboard (`monitoring/grafana/provisioning/dashboards/json/quorum-api-overview.json`)
+the Prometheus datasource and three dashboards (`monitoring/grafana/provisioning/dashboards/json/`)
 on startup — nothing to click through by hand. Open http://localhost:3001 (`admin`/`admin`) →
-**Quorum → Quorum — API Overview**. Seven panels:
+folder **Quorum**:
 
-- Total votes, votes/sec (1m rate), error rate (5xx, 5m rate)
-- Votes by candidate (distribution) and votes/sec by candidate (trend)
-- API latency, p95/p99 per route
-- HTTP requests by status code
+- **Quorum — Votes & Business**: total votes, votes/sec, progress toward the 1,000
+  votes/sec peak target, votes by candidate (distribution) and votes/sec by candidate (trend).
+- **Quorum — API Performance**: requests/sec by route, p50/p95/p99 latency by route, total
+  throughput, average response time.
+- **Quorum — Errors & Debug**: error rate (5xx), throttled votes (429/sec), unhandled
+  exceptions escaping to Rack, requests by status code, 4xx/5xx broken down by route — the
+  dashboard to open first when something looks wrong.
+
+### Two multi-process gotchas found and fixed while building this
+
+Both were invisible until traffic was pushed through the actual Puma configuration
+(`WEB_CONCURRENCY=12`, `config/puma.rb`), not obvious from reading the code in isolation:
+
+- **Throttled (429) requests were invisible to Prometheus.** `config/application.rb` had
+  `Rack::Attack` registered *before* `Prometheus::Middleware::Collector`, so a throttled
+  request never reached the Collector at all — Rack::Attack's own short-circuit response
+  skipped it. Fixed by reordering so Collector wraps Rack::Attack: it now sees every
+  response Rack::Attack returns, including the 429s.
+- **Metrics were inconsistent between scrapes.** prometheus-client's default `Synchronized`
+  store keeps counters in per-process memory. With 12 Puma workers, each scrape landed on
+  one arbitrary worker and only reported that worker's local counters — the same query could
+  return 0 or the full total depending on which process answered. Fixed in
+  `config/initializers/prometheus.rb` by switching to `DirectFileStore`, the gem's
+  documented multi-process store: each worker writes to its own file, and a scrape sums
+  across all of them. The metrics directory is wiped before Puma forks (`preload_app!` in
+  `config/puma.rb` runs the initializer once in the master process), since a restarted
+  worker can reuse a low PID and would otherwise silently merge with a stale file from a
+  previous run.
 
 ## Code style
 
@@ -180,8 +204,8 @@ voting — and both are already on the dashboard, not just written down.
 
 | SLO | Target | SLI (PromQL) | Dashboard panel |
 |---|---|---|---|
-| Availability | ≥ 99.5% of requests succeed (non-5xx) over a rolling 5m window | `1 - (sum(rate(http_server_requests_total{code=~"5.."}[5m])) or vector(0)) / (sum(rate(http_server_requests_total[5m])) or vector(1))` | "Taxa de erro (5xx, janela 5m)" |
-| Latency | p95 of any route stays under 300ms | `histogram_quantile(0.95, sum by (le, path) (rate(http_server_request_duration_seconds_bucket[5m])))` | "Latência da API (p95 / p99 por rota)" |
+| Availability | ≥ 99.5% of requests succeed (non-5xx) over a rolling 5m window | `1 - (sum(rate(http_server_requests_total{code=~"5.."}[5m])) or vector(0)) / (sum(rate(http_server_requests_total[5m])) or vector(1))` | Errors & Debug → "Taxa de erro (5xx, janela 5m)" |
+| Latency | p95 of any route stays under 300ms | `histogram_quantile(0.95, sum by (le, path) (rate(http_server_request_duration_seconds_bucket[5m])))` | API Performance → "Latência por rota — p50 / p95 / p99" |
 
 If the error-rate SLI drops below 99.5% or the latency SLI crosses 300ms sustained, that's
 the signal to look at Redis/Postgres health first — per the trade-offs above, those are the
