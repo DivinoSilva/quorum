@@ -61,6 +61,8 @@ services:
     image: prom/prometheus:latest
     volumes:
       - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+    tmpfs:
+      - /prometheus:mode=1777
     ports:
       - "9090:9090"
     depends_on:
