@@ -209,9 +209,11 @@ docker compose exec api bundle exec rubocop
 ## Running tests
 
 ```bash
-docker compose exec -e RAILS_ENV=test -e DATABASE_URL=postgres://quorum:quorum@postgres:5432/quorum_test api bin/rails db:test:prepare
-docker compose exec -e RAILS_ENV=test -e DATABASE_URL=postgres://quorum:quorum@postgres:5432/quorum_test api bundle exec rspec
+docker compose exec -e RAILS_ENV=test api bin/rails db:test:prepare
+docker compose exec -e RAILS_ENV=test api bundle exec rspec
 ```
+
+`TEST_DATABASE_URL` (separate from the development `DATABASE_URL`, both set in `docker-compose.yml`) is what `config/database.yml`'s `test:` block reads — kept explicit and distinct so a stray RSpec run can never point at the development database.
 
 ## SLO / SLI
 

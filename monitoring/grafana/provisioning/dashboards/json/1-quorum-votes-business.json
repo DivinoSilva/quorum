@@ -78,7 +78,7 @@
       "id": 5,
       "type": "timeseries",
       "title": "Votos por segundo, por candidato",
-      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 6 },
+      "gridPos": { "h": 9, "w": 8, "x": 16, "y": 6 },
       "datasource": "Prometheus",
       "targets": [
         {
@@ -96,7 +96,7 @@
       "type": "table",
       "title": "Detalhamento por candidato",
       "description": "Votos e percentual exatos por candidato.",
-      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 6 },
+      "gridPos": { "h": 9, "w": 8, "x": 8, "y": 6 },
       "datasource": "Prometheus",
       "targets": [
         {
@@ -141,6 +141,27 @@
         ]
       },
       "options": { "showHeader": true }
+    },
+    {
+      "id": 4,
+      "type": "piechart",
+      "title": "Votos por candidato",
+      "description": "Percentual exato — a fatia usa o mesmo cálculo de percentual da tabela ao lado, em vez do valor bruto de votos, que arredonda empates próximos na legenda.",
+      "gridPos": { "h": 9, "w": 8, "x": 0, "y": 6 },
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": "Prometheus",
+          "expr": "100 * sum by (candidate_name) (votes_total) / scalar(sum(votes_total))",
+          "legendFormat": "{{candidate_name}}"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "percent", "decimals": 2 }, "overrides": [] },
+      "options": {
+        "legend": { "displayMode": "table", "placement": "right", "values": ["value"] },
+        "pieType": "pie"
+      }
     }
   ]
 }

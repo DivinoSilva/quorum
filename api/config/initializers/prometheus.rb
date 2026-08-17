@@ -34,3 +34,18 @@ VOTES_COUNTER = Prometheus::Client::Counter.new(
 )
 
 Prometheus::Client.registry.register(VOTES_COUNTER)
+
+# Postgres is the source of truth and survives restarts; this counter doesn't
+# (see the multiproc wipe above). Without this, every server restart would
+# make Grafana's totals disagree with the real vote count until fresh votes
+# came back in.
+if Rails.const_defined?(:Server)
+  Rails.application.config.after_initialize do
+    Candidate.find_each do |candidate|
+      count = candidate.votes.count
+      next if count.zero?
+
+      VOTES_COUNTER.increment(by: count, labels: { candidate_id: candidate.id, candidate_name: candidate.name })
+    end
+  end
+end
